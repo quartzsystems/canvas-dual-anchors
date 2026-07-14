@@ -1,0 +1,10 @@
+{
+  "id": "canvas-dual-anchors",
+  "name": "Canvas Dual Labels & Anchors",
+  "version": "0.6.0",
+  "minAppVersion": "1.5.0",
+  "description": "Adds a label at each end of a Canvas connection line, and lets you slide each connection's anchor point along a card's side instead of being locked to the center.",
+  "author": "Quartz Systems",
+  "authorUrl": "",
+  "isDesktopOnly": false
+}
