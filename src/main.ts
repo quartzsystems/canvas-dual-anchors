@@ -1,4 +1,4 @@
-import { Plugin, WorkspaceLeaf, Menu, Notice } from "obsidian";
+import { Plugin, WorkspaceLeaf, Menu, Notice, PluginSettingTab, Setting, App } from "obsidian";
 import { around } from "monkey-around";
 
 /**
@@ -30,6 +30,18 @@ import { around } from "monkey-around";
  */
 
 const DEFAULT_OFFSET = 0.5;
+
+interface CdaSettings {
+  /** Show the "+" placeholder chips on edges that have no start/end label yet. */
+  showEmptyChips: boolean;
+  /** Show the draggable anchor dots at connection endpoints. */
+  showHandles: boolean;
+}
+
+const DEFAULT_SETTINGS: CdaSettings = {
+  showEmptyChips: true,
+  showHandles: true,
+};
 
 // ---- geometry helpers -------------------------------------------------
 
@@ -89,6 +101,7 @@ export default class CanvasDualAnchorsPlugin extends Plugin {
   private overlays = new WeakMap<any, HTMLElement>();
   private liveOverlays: HTMLElement[] = [];
   private tickerId: number | null = null;
+  settings: CdaSettings = { ...DEFAULT_SETTINGS };
   /** Per-canvas registry of decorations, keyed by edge id, so we can sweep stale ones. */
   private decor = new WeakMap<any, Map<string, EdgeDecor>>();
 
@@ -352,9 +365,51 @@ export default class CanvasDualAnchorsPlugin extends Plugin {
     this.liveOverlays = [];
     // Belt and braces: nuke any stragglers from a previous plugin instance.
     document.querySelectorAll(".dual-anchor-overlay").forEach((el) => el.remove());
+    document.body.removeClass("cda-hide-empty-chips");
+    document.body.removeClass("cda-hide-handles");
+  }
+
+  async saveSettings() {
+    await this.saveData(this.settings);
+    this.applyVisibilityClasses();
+  }
+
+  /**
+   * Visibility is applied with two body classes + CSS rather than by touching
+   * each chip/handle element: one class flip instantly affects every canvas,
+   * nothing needs re-rendering, and newly created elements are automatically
+   * correct without extra bookkeeping.
+   */
+  applyVisibilityClasses() {
+    document.body.toggleClass("cda-hide-empty-chips", !this.settings.showEmptyChips);
+    document.body.toggleClass("cda-hide-handles", !this.settings.showHandles);
   }
 
   async onload() {
+    this.settings = { ...DEFAULT_SETTINGS, ...((await this.loadData()) ?? {}) };
+    this.addSettingTab(new CdaSettingTab(this.app, this));
+    this.applyVisibilityClasses();
+
+    this.addCommand({
+      id: "toggle-empty-label-chips",
+      name: "Toggle empty label placeholders (+)",
+      callback: async () => {
+        this.settings.showEmptyChips = !this.settings.showEmptyChips;
+        await this.saveSettings();
+        new Notice(`Empty label placeholders ${this.settings.showEmptyChips ? "shown" : "hidden"}`);
+      },
+    });
+
+    this.addCommand({
+      id: "toggle-anchor-dots",
+      name: "Toggle connection anchor dots",
+      callback: async () => {
+        this.settings.showHandles = !this.settings.showHandles;
+        await this.saveSettings();
+        new Notice(`Anchor dots ${this.settings.showHandles ? "shown" : "hidden"}`);
+      },
+    });
+
     this.app.workspace.onLayoutReady(() => {
       this.patchAllOpenCanvases();
       this.startTicker();
@@ -1036,5 +1091,49 @@ export default class CanvasDualAnchorsPlugin extends Plugin {
 
     document.addEventListener("pointermove", onMove);
     document.addEventListener("pointerup", onUp, { once: true });
+  }
+}
+
+class CdaSettingTab extends PluginSettingTab {
+  plugin: CanvasDualAnchorsPlugin;
+
+  constructor(app: App, plugin: CanvasDualAnchorsPlugin) {
+    super(app, plugin);
+    this.plugin = plugin;
+  }
+
+  display(): void {
+    const { containerEl } = this;
+    containerEl.empty();
+
+    new Setting(containerEl)
+      .setName("Show empty label placeholders")
+      .setDesc(
+        "Show the small \"+\" chips on connections that don't have a start/end " +
+        "label yet. Turn off for clean screenshots -- labels you've already " +
+        "typed stay visible, only the empty placeholders are hidden. " +
+        "(Also toggleable from the command palette.)"
+      )
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.showEmptyChips).onChange(async (value) => {
+          this.plugin.settings.showEmptyChips = value;
+          await this.plugin.saveSettings();
+        })
+      );
+
+    new Setting(containerEl)
+      .setName("Show connection anchor dots")
+      .setDesc(
+        "Show the draggable dots at each end of a connection. Turn off for " +
+        "screenshots. Note: with dots hidden you can't drag anchors, but " +
+        "existing offsets still apply and everything else keeps working. " +
+        "(Also toggleable from the command palette.)"
+      )
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.showHandles).onChange(async (value) => {
+          this.plugin.settings.showHandles = value;
+          await this.plugin.saveSettings();
+        })
+      );
   }
 }

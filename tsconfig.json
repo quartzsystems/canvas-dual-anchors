@@ -1,85 +1,17 @@
-.dual-anchor-overlay {
-  pointer-events: none;
-}
-
-.dual-anchor-label-chip {
-  position: absolute;
-  top: 0;
-  left: 0;
-  pointer-events: all;
-  cursor: text;
-  z-index: 6;
-  font-size: 12px;
-  line-height: 1.2;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: var(--background-primary);
-  border: 1px solid var(--background-modifier-border);
-  color: var(--text-normal);
-  white-space: nowrap;
-  max-width: 220px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  user-select: none;
-}
-
-.dual-anchor-label-chip.is-empty {
-  opacity: 0.35;
-}
-
-.dual-anchor-label-chip.is-empty::before {
-  content: "+";
-}
-
-.dual-anchor-label-chip[contenteditable="true"] {
-  opacity: 1;
-  cursor: text;
-  overflow: visible;
-  white-space: pre;
-  user-select: text;
-  box-shadow: 0 0 0 2px var(--interactive-accent);
-}
-
-.dual-anchor-drag-handle {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--interactive-accent);
-  border: 2px solid var(--background-primary);
-  cursor: grab;
-  z-index: 7;
-  pointer-events: all;
-  touch-action: none;
-  opacity: 0.45;
-  transition: opacity 0.1s ease;
-}
-
-/* Invisible enlarged hit area -- a 10px dot is a miserable click target,
-   especially when it sits right on a card border. */
-.dual-anchor-drag-handle::before {
-  content: "";
-  position: absolute;
-  top: -8px;
-  left: -8px;
-  right: -8px;
-  bottom: -8px;
-  border-radius: 50%;
-}
-
-.dual-anchor-drag-handle:hover,
-.dual-anchor-drag-handle:active {
-  opacity: 1;
-}
-
-.dual-anchor-label-chip {
-  cursor: grab;
-}
-
-.dual-anchor-label-chip.is-dragging {
-  cursor: grabbing;
-  opacity: 1;
-  box-shadow: 0 0 0 2px var(--interactive-accent);
+{
+  "compilerOptions": {
+    "inlineSourceMap": true,
+    "inlineSources": true,
+    "module": "ESNext",
+    "target": "ES2020",
+    "allowJs": true,
+    "noImplicitAny": false,
+    "moduleResolution": "bundler",
+    "importHelpers": true,
+    "isolatedModules": true,
+    "strict": false,
+    "lib": ["DOM", "ES6", "ES2020"],
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*.ts"]
 }
